@@ -127,10 +127,134 @@ void CREATE(char **input, int num) {
 }
 
 void INSERT(char **input, int num) {
-
+    char *filename;
+    filename = new char[strlen(input[2]) - 2 + 1];
+    for (int i = 0; i < strlen(input[2]) - 2; i++) {//because of ``
+        filename[i] = input[2][i + 1];
+    }
+    filename[strlen(input[2]) - 2] = NULL;
+    ifstream myfilenames;
+    ifstream myfiletypes;
+    myfilenames.open("subjects" + string(filename) + ".txt");
+    myfiletypes.open("types" + string(filename) + ".txt");
+    if (myfilenames.is_open()) {
+        char *names[num - 4], *types[num - 4];//inja dige amalan bikhod ba dynamic raftam
+        int counter = 0;
+        do {
+            names[counter] = new char[25];
+            types[counter] = new char[25];
+            myfilenames >> names[counter];
+            myfiletypes >> types[counter];
+            counter++;
+        } while (!myfilenames.eof());
+        bool check_values = 1;
+        for (int i = 0; i < counter - 1 && check_values; i++) {
+            check_values = 0;
+            if (i == 0) {
+                if (input[4 + i][1] == '`' && (strncmp(types[i], "string", 6) == 0))
+                    check_values = 1;
+                if (input[4 + i][1] != '`' &&
+                    ((strncmp(types[i], "int", 3) == 0) || (strncmp(types[i], "float", 5) == 0)))
+                    check_values = 1;
+            } else {
+                if (input[4 + i][0] == '`' && strncmp(types[i], "string", 6) == 0)
+                    check_values = 1;
+                if (input[4 + i][0] != '`' &&
+                    ((strncmp(types[i], "int", 3) == 0) || (strncmp(types[i], "float", 5) == 0)))
+                    check_values = 1;
+            }
+        }
+        for (int i = 0; i < num - 4; i++) {
+            //delete[]types[i];
+            delete[]names[i];
+        }
+        myfilenames.close();
+        myfiletypes.close();
+        if (check_values) {
+            char *values[(num - 4)];//because of INSERT INTO `table_name` VALUES
+            int secondcounter = 0;
+            for (int i = 4; i < num; i++) {
+                if (i == 4) {
+                    if (input[4][1] == '`') {
+                        values[secondcounter] = new char[strlen(input[4]) - 4 + 1];
+                        for (int j = 0; j < strlen(input[4]) - 4; j++) {//-4 is for ('',
+                            values[secondcounter][j] = input[4][j + 2];
+                        }
+                        values[secondcounter][strlen(input[4]) - 4] = NULL;
+                        secondcounter++;
+                    } else {
+                        values[secondcounter] = new char[strlen(input[4]) - 2 + 1];
+                        for (int j = 0; j < strlen(input[4]) - 2; j++) {//-3 is for ('',
+                            values[secondcounter][j] = input[4][j + 1];
+                        }
+                        values[secondcounter][strlen(input[4]) - 2] = NULL;
+                        secondcounter++;
+                    }
+                } else {
+                    if (input[i][0] == '`') {
+                        values[secondcounter] = new char[strlen(input[i]) - 3 + 1];
+                        for (int j = 0;
+                             j < strlen(input[i]) - 3; j++) {//-1 is for comma in the end or bracket
+                            values[secondcounter][j] = input[i][j + 1];
+                        }
+                        values[secondcounter][strlen(input[i]) - 3] = NULL;
+                        secondcounter++;
+                    } else {
+                        values[secondcounter] = new char[strlen(input[i]) - 1 + 1];
+                        for (int j = 0;
+                             j < strlen(input[i]) - 1; j++) {//-1 is for comma in the end or bracket
+                            values[secondcounter][j] = input[i][j];
+                        }
+                        values[secondcounter][strlen(input[i]) - 1] = NULL;
+                        secondcounter++;
+                    }
+                }
+            }
+            bool final_check = 1;//for int and float variables
+            for (int i = 0; i < secondcounter && final_check; i++) {
+                if ((strncmp(types[i], "float", 6) == 0)) {
+                    double a = atof(values[i]);
+                    if (int(a) == a) {
+                        int b = int(a);
+                        int length1 = 0;
+                        while (b > 0) {
+                            b = b / 10;
+                            length1++;
+                        }
+                        if (length1 == strlen(values[i]))
+                            final_check = 0;
+                    }
+                }
+                if ((strncmp(types[i], "int", 4) == 0)) {
+                    int a = atoi(values[i]);
+                    float b = atof(values[i]);
+                    if (a != b)
+                        final_check = 0;
+                }
+            }
+            if (final_check) {
+                ofstream myfile;
+                myfile.open((string(filename) + ".txt"), fstream::app);
+                for (int j = 0; j < secondcounter; j++) {
+                    myfile << values[j] << " ";
+                    delete[]values[j];
+                }
+                cout << "done ;) ";
+            } else {
+                cout << "you didn't pay attention to int and float types,try again plz...";
+            }
+        } else {
+            cout << "values doesn't match with their type " << endl;
+        }
+    } else {
+        cout << "the file doesn't exist!" << endl;
+        myfilenames.close();
+        myfiletypes.close();
+    }
 }
 
 void SELECT(char **input, int num, int fromplace) {
+
 }
 
 void UPDATE(char **input, int num) {
@@ -138,9 +262,6 @@ void UPDATE(char **input, int num) {
 }
 
 void DELETE(char **input, int num) {
-}
-
-void DROP(char **input) {
 
 }
 
