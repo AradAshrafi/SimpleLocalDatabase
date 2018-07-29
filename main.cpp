@@ -254,14 +254,327 @@ void INSERT(char **input, int num) {
 }
 
 void SELECT(char **input, int num, int fromplace) {
+    char *filename;
+    filename = new char[strlen(input[fromplace + 1]) - 2 + 1];
+    for (int i = 0; i < strlen(input[fromplace + 1]) - 2; i++) {//because of ``
+        filename[i] = input[fromplace + 1][i + 1];
+    }
+    filename[strlen(input[fromplace + 1]) - 2] = NULL;
+    ifstream myfile;
+    myfile.open(string(filename) + ".txt");
+    if (myfile.is_open()) {
+        char *names[fromplace - 1];
+        for (int i = 1; i < fromplace; i++) {
+            if (i == (fromplace - 1)) {
+                names[i - 1] = new char[strlen((input[i]) - 2)];
+                for (int j = 0; j < (strlen(input[i]) - 2); j++) {
+                    names[i - 1][j] = input[i][j + 1];
+                }
+                names[i - 1][strlen(input[i]) - 2] = NULL;
+            } else {
+                names[i - 1] = new char[strlen((input[i]) - 3)];
+                for (int j = 0; j < (strlen(input[i]) - 3); j++) {
+                    names[i - 1][j] = input[i][j + 1];
+                }
+                names[i - 1][strlen(input[i]) - 3] = NULL;
+            }
+        }
+        ifstream myfilesubjects;
+        int check = 0;
+        int counter = 0;//counter is subject counter,second counter is all variables counter
+        bool finder[50] = {0};//finder shows that what  subjects are wanted to be shown
+        myfilesubjects.open("subjects" + string(filename) + ".txt");
+        char subjects[100][20] = {NULL};
+        while (!myfilesubjects.eof()) {
+            myfilesubjects >> subjects[counter];
+            for (int i = 1; i < fromplace && !finder[counter]; i++) {
+                if (strncmp(subjects[counter], names[i - 1], strlen(subjects[counter]) + 1) == 0) {
+                    check++;
+                    finder[counter] = true;
+                }
+            }
+            counter++;
+        }
+        counter--;//because of the character of eof !
+        myfilesubjects.close();
+        int secondcounter = 0;
+        char variables[60 * counter][20] = {NULL};
+        while (!myfile.eof()) {
+            myfile >> variables[secondcounter];
+            secondcounter++;
+        }
+        secondcounter--;//because of the character of eof !
+        int times = (secondcounter / counter);
+        myfile.close();
+        if (names[0][0] != '*') {
+            if ((num - fromplace > 3) && (check == (fromplace - 1))) {//dige majbur shodam az strtok estefade konam :))
+                char **token = new char *[num - fromplace - 3];
+                int token_counter = 0;
+                while (token_counter != num - fromplace - 3) {
+                    token[token_counter] = strtok(input[token_counter + fromplace + 2],
+                                                  " ");//+2 vase ineke az baade esme file shuru kone be gereftane dadehash
+                    token_counter++;
+                }
+                int *returnvalue = new int[2];
+                int *returnvalue1 = new int[2];
+                int *returnvalue2 = new int[2];
+                findstr(token, num - fromplace - 3, "WHERE", returnvalue);
+                if (returnvalue[0] == 1) {
+                    findstr(token, num - fromplace - 3, "OR", returnvalue1);
+                    findstr(token, num - fromplace - 3, "AND", returnvalue2);
+                    if ((returnvalue1[0] + returnvalue2[0]) ==
+                        0) {//so it just have WHERE,and doesn't have any ORs & ANDs :D
+                        char *firsttoken[2];
+                        int token_check = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+                        while (token_check < 2) {
+                            if (token_check == 0) {
+                                firsttoken[token_check] = strtok(input[fromplace + 3], "=`");
+                                token_check++;
+                            } else {
+                                firsttoken[token_check] = strtok(NULL, "=`");
+                                token_check++;
+                            }
+                        }
+                        bool subjectcheck = 0;
+                        for (int i = 0; i < counter && !subjectcheck; i++) {
+                            if (strncmp(firsttoken[0], subjects[i], strlen(subjects[i]) + 1) == 0)
+                                subjectcheck = 1;
+                        }
+                        if (subjectcheck) {
+                            bool variablecheck = 0;
+                            int whatrow2show = 0;
+                            for (int i = 0; i < secondcounter && !variablecheck; i++) {
+                                if (strncmp(firsttoken[1], variables[i], strlen(variables[i]) + 1) == 0) {
+                                    variablecheck = 1;
+                                    whatrow2show = i / counter;
+                                }
+                            }
+                            if (variablecheck) {
+                                for (int i = 0; i < counter; i++) {
+                                    if (finder[i]) {
+                                        for (int j = 0; j < times; j++)
+                                            if (j == whatrow2show) {
+                                                cout << variables[i + j * counter] << " ";
+                                                cout << endl;
+                                            }
+                                    }
+                                }
+                            } else
+                                cout
+                                        << "check ur inputs(specialy variables after WHERE),it doesn't match with saved data";
 
+                        } else
+                            cout
+                                    << "check ur inputs(specialy subjects after WHERE),it doesn't not match with saved data";
+                    } else if (num - fromplace - 3 >= 4 && num - fromplace - 3 <= 6) {
+                        char *firsttoken[2];
+                        int token_check = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+                        while (token_check < 2) {
+                            if (token_check == 0) {
+                                firsttoken[token_check] = strtok(input[fromplace + 3], "=`");
+                                token_check++;
+                            } else {
+                                firsttoken[token_check] = strtok(NULL, "=`");
+                                token_check++;
+                            }
+                        }
+                        char *secondtoken[2];
+                        char *thirdtoken[2];
+                        int token_check2 = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+                        while (token_check2 < 2) {
+                            if (token_check2 == 0) {
+                                secondtoken[token_check2] = strtok(input[fromplace + 5], "=`");
+                                token_check2++;
+                            } else {
+                                secondtoken[token_check2] = strtok(NULL, "=`");
+                                token_check2++;
+                            }
+                        }
+                        if (num - fromplace - 3 == 6) {
+                            int token_check3 = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+                            while (token_check3 < 2) {
+                                if (token_check3 == 0) {
+                                    thirdtoken[token_check3] = strtok(input[fromplace + 7], "=`");
+                                    token_check3++;
+                                } else {
+                                    thirdtoken[token_check3] = strtok(NULL, "=`");
+                                    token_check3++;
+                                }
+                            }
+                        }
+                        bool subjectcheck = 0;
+                        for (int i = 0; i < counter && !subjectcheck; i++) {
+                            if (strncmp(firsttoken[0], subjects[i], strlen(subjects[i]) + 1) == 0)
+                                for (int j = 0; j < counter && !subjectcheck; j++) {
+                                    if (strncmp(secondtoken[0], subjects[j], strlen(subjects[j]) + 1) == 0)
+                                        if (num - fromplace - 3 == 6) {
+                                            for (int k = 0; k < counter && !subjectcheck; k++)
+                                                if (strncmp(thirdtoken[0], subjects[k], strlen(subjects[k]) + 1) == 0)
+                                                    subjectcheck = 1;
+                                        } else {
+                                            subjectcheck = 1;
+                                        }
+                                }
+                        }
+
+                        if (subjectcheck) {
+                            bool variablecheck = 0;
+                            int whatrow2show[3] = {0};
+                            for (int i = 0; i < secondcounter && !variablecheck; i++) {
+                                if (strncmp(firsttoken[1], variables[i], strlen(variables[i]) + 1) == 0) {
+                                    whatrow2show[0] = i / counter;
+                                    for (int j = 0; j < secondcounter && !variablecheck; j++) {
+                                        if (strncmp(secondtoken[1], variables[j], strlen(variables[j]) + 1) == 0) {
+                                            whatrow2show[1] = j / counter;
+                                            if (num - fromplace - 3 == 6) {
+                                                for (int k = 0; k < secondcounter && !variablecheck; k++)
+                                                    if (strncmp(thirdtoken[1], variables[k],
+                                                                strlen(variables[k]) + 1) ==
+                                                        0) {
+                                                        variablecheck = 1;
+                                                        whatrow2show[2] = k / counter;
+                                                    }
+                                            } else {
+                                                variablecheck = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (variablecheck) {
+                                bool continue_or_not = 1;
+                                for (int i = 0; i < counter && continue_or_not; i++) {
+                                    if (finder[i]) {
+                                        for (int j = 0; j < times && continue_or_not; j++) {
+                                            if (num - fromplace - 3 == 4) {
+                                                if (strncmp(token[2], "OR", 3) == 0) {
+                                                    if (j == whatrow2show[0] || j == whatrow2show[1]) {
+                                                        cout << variables[i + j * counter] << " ";
+                                                    }
+                                                }
+                                                if (strncmp(token[2], "AND", 4) == 0) {
+                                                    if (whatrow2show[0] == whatrow2show[1]) {
+                                                        if (j == whatrow2show[0]) {
+                                                            cout << variables[i + j * counter] << " ";
+                                                        }
+                                                    } else {
+                                                        continue_or_not = 0;
+                                                        cout << "tese two doesn't have anything in common...";
+                                                    }
+                                                }
+                                            }
+                                            if (num - fromplace - 3 == 6) {
+                                                if (strncmp(token[2], "OR", 3) == 0) {
+                                                    if (strncmp(token[4], "OR", 3) == 0) {
+                                                        if (j == whatrow2show[0] || j == whatrow2show[1] ||
+                                                            whatrow2show[2]) {
+                                                            cout << variables[i + j * counter] << " ";
+                                                        }
+                                                    }
+                                                    if (strncmp(token[4], "AND", 4) == 0) {
+                                                        if ((whatrow2show[0] == whatrow2show[2]) ||
+                                                            (whatrow2show[1] == whatrow2show[2])) {
+                                                            if (j == whatrow2show[2]) {
+                                                                cout << variables[i + j * counter] << " ";
+                                                            }
+                                                        } else {
+                                                            continue_or_not = 0;
+                                                            cout << "there isn't such data ...";
+                                                        }
+
+                                                    }
+                                                }
+                                                if (strncmp(token[2], "AND", 4) == 0) {
+                                                    if (strncmp(token[4], "OR", 3) == 0) {
+                                                        if (whatrow2show[0] == whatrow2show[1]) {
+                                                            if (j == whatrow2show[2] || whatrow2show[0]) {
+                                                                cout << variables[i + j * counter] << " ";
+                                                            }
+                                                        } else {
+                                                            if (j == whatrow2show[2]) {
+                                                                cout << variables[i + j * counter] << " ";
+                                                            }
+                                                        }
+                                                    }
+                                                    if (strncmp(token[4], "AND", 4) == 0) {
+                                                        if (whatrow2show[0] == whatrow2show[2] &&
+                                                            whatrow2show[1] == whatrow2show[2]) {
+                                                            if (j == whatrow2show[2]) {
+                                                                cout << variables[i + j * counter] << " ";
+                                                            }
+                                                        } else {
+                                                            continue_or_not = 0;
+                                                            cout << "there isn't such data ...";
+                                                        }
+
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        cout << endl;
+                                    }
+                                }
+                            } else {
+                                cout
+                                        << "check ur inputs(specialy variables after WHERE),it doesn't match with saved data";
+                            }
+
+                        } else {
+                            cout
+                                    << "check ur inputs(specialy subjects after WHERE),it doesn't not match with saved data";
+                        }
+
+                        delete[]firsttoken;
+                        delete[]secondtoken;
+                        delete[]thirdtoken;
+                    }
+                } else {
+                    cout << "wrong syntax,check ur input plz... ";
+                }
+                for (int i = 0; i < num - fromplace - 3; i++) {
+                    delete[]token[i];
+                }
+            }
+            if (num - fromplace == 3 && check == ((fromplace) - 1)) {
+                for (int i = 0; i < counter; i++) {
+                    if (finder[i]) {
+                        for (int j = 0; j < times; j++)
+                            cout << variables[i + j * counter] << " ";
+                        cout << endl;
+                    }
+                }
+            }
+            if (check != (fromplace) - 1) {
+                cout << "check ur input,it doesn't match with saved data";
+            }
+            for (int i = 0; i < fromplace - 2; i++) {
+                delete[]names[i];
+            }
+        } else {
+            for (int i = 0; i < counter; i++) {
+                for (int j = 0; j < times; j++)
+                    cout << variables[i + j * counter] << " ";
+                cout << endl;
+            }
+
+        }
+
+    } else {
+        cout << "file isn't available,or it's empty...";
+    }
+    delete[]filename;
 }
 
 void UPDATE(char **input, int num) {
 
+
 }
 
 void DELETE(char **input, int num) {
+
+}
+
+void DROP(char **input) {
 
 }
 
