@@ -567,15 +567,110 @@ void SELECT(char **input, int num, int fromplace) {
 
 void UPDATE(char **input, int num) {
 
-
 }
 
 void DELETE(char **input, int num) {
+    char *filename;
+    filename = new char[strlen(input[2]) - 2 + 1];
+    for (int i = 0; i < strlen(input[2]) - 2; i++) {//because of ``
+        filename[i] = input[2][i + 1];
+    }
+    filename[strlen(input[2]) - 2] = NULL;
+    ifstream myfile;
+    myfile.open(string(filename) + ".txt");
+    if (myfile.is_open()) {
+        ifstream myfilesubjects;
+        myfilesubjects.open("subjects" + string(filename) + ".txt");
+        int counter = 0;
+        char subjects[100][20] = {NULL};
+        while (!myfilesubjects.eof()) {
+            myfilesubjects >> subjects[counter];
+            counter++;
+        }
+        counter--;//because of the character of eof !
+        int secondcounter = 0;
+        myfilesubjects.close();
+        char variables[60 * counter][20] = {NULL};
+        while (!myfile.eof()) {
+            myfile >> variables[secondcounter];
+            secondcounter++;
+        }
+        secondcounter--;//because of the character of eof !
+        int times = (secondcounter / counter);
+        myfile.close();
+        char *where2delete = input[num - 2];
+        char *token[2];
+        int check = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+        while (check < 2) {
+            if (check == 0) {
+                token[check] = strtok(where2delete, "=`");
+                cout << token[check] << endl;
+                check++;
+            } else {
+                token[check] = strtok(NULL, "=`");
+                cout << token[check] << endl;
+                check++;
+            }
+        }
 
+        bool secondcheck = 0;
+        for (int i = 0; i < counter && !secondcheck; i++) {
+            if (strncmp(token[0], subjects[i], strlen(token[0]) + 1) == 0)
+                secondcheck = 1;
+        }
+        if (!secondcheck)
+            cout << "there isn't such subject! " << endl;
+        else {
+            bool thirdcheck = 0;
+            int thirdcounter = 0;
+            for (int i = 0; i < secondcounter && !thirdcheck; i++) {
+                if (strncmp(token[1], variables[i], strlen(token[1]) + 1) == 0)
+                    thirdcheck = 1;
+                thirdcounter++;
+            }
+            thirdcounter--;
+            if (!thirdcheck)
+                cout << "there isn't such data" << endl;
+            else {//both subject and name are true
+                int rownumber = 0;
+                for (int i = 0; i < times; i++) {
+                    if (thirdcounter < (i * counter + counter))
+                        break;
+                    rownumber++;
+                }
+
+                ofstream writeinfile;
+                writeinfile.open(string(filename) + ".txt");
+                for (int i = 0; i < secondcounter; i++) {//actually it's variable counter
+                    if ((i / counter) == rownumber)
+                        continue;
+                    writeinfile << variables[i] << " ";
+                }
+                cout << "successfully deleted . ";
+            }
+        }
+        delete[]where2delete;
+    } else {
+        cout << "file isn't available,or it's empty...";
+    }
+    delete[]filename;
 }
 
 void DROP(char **input) {
-
+    char *filename;
+    filename = new char[strlen(input[2]) - 2];
+    for (int i = 0; i < strlen(input[2]) - 2; i++) {//because of ``
+        filename[i] = input[2][i + 1];
+    }
+    filename[strlen(input[2]) - 2] = NULL;
+    if (remove((filename + string(".txt")).c_str()))
+        cout << "there's no such file to delete";
+    else {
+        remove((string("subjects") + filename + string(".txt")).c_str());
+        remove((string("types") + filename + string(".txt")).c_str());
+        cout << "successfully deleted ;) ";
+    }
+    delete[]filename;
 }
 
 int main() {
