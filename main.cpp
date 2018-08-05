@@ -566,6 +566,135 @@ void SELECT(char **input, int num, int fromplace) {
 }
 
 void UPDATE(char **input, int num) {
+    char *filename;
+    filename = new char[strlen(input[1]) - 2 + 1];
+    for (int i = 0; i < strlen(input[1]) - 2; i++) {//because of ``
+        filename[i] = input[1][i + 1];
+    }
+    filename[strlen(input[1]) - 2] = NULL;
+    ifstream myfile;
+    myfile.open(string(filename) + ".txt");
+    if (myfile.is_open()) {
+        ifstream myfilesubjects;
+        myfilesubjects.open("subjects" + string(filename) + ".txt");
+        int counter = 0;
+        char subjects[100][20] = {NULL};
+        while (!myfilesubjects.eof()) {
+            myfilesubjects >> subjects[counter];
+            counter++;
+        }
+        counter--;//because of the character of eof !
+        int secondcounter = 0;
+        myfilesubjects.close();
+        char variables[60 * counter][20] = {NULL};
+        while (!myfile.eof()) {
+            myfile >> variables[secondcounter];
+            secondcounter++;
+        }
+        secondcounter--;//because of the character of eof !
+        int rows = (secondcounter / counter);
+        myfile.close();
+        char *where2update = input[num - 2];
+        char *firsttoken[2];
+        int check = 0;//vase ineke dafeye avval bayad yejure dige farakhuni konim strtoko
+        while (check < 2) {
+            if (check == 0) {
+                firsttoken[check] = strtok(where2update, "=`");
+                check++;
+            } else {
+                firsttoken[check] = strtok(NULL, "=`");
+                check++;
+            }
+        }
+
+        bool secondcheck = 0;
+        for (int i = 0; i < counter && !secondcheck; i++) {
+            if (strncmp(firsttoken[0], subjects[i], strlen(firsttoken[0]) + 1) == 0)
+                secondcheck = 1;
+        }
+        if (!secondcheck)
+            cout << "there isn't such subject! " << endl;
+        else {
+            bool thirdcheck = 0;
+            int thirdcounter = 0;
+            for (int i = 0; i < secondcounter && !thirdcheck; i++) {
+                if (strncmp(firsttoken[1], variables[i], strlen(firsttoken[1]) + 1) == 0)
+                    thirdcheck = 1;
+                thirdcounter++;
+            }
+            thirdcounter--;
+            if (!thirdcheck)
+                cout << "there isn't such data" << endl;
+            else {//both subject and name which are aftre while are true
+                int rownumber = 0;
+                for (int i = 0; i < rows; i++) {
+                    if (thirdcounter < (i * counter + counter))
+                        break;
+                    rownumber++;
+                }
+                char *whatsubjects2update[(num - 3) - 2 - 1],
+                        *whatvariables2update[(num - 3) - 2 - 1];//where plcae - set place -1
+                for (int i = 3; i < num - 3; i++) {
+                    whatsubjects2update[i - 3] = new char[strlen(input[i]) - 5];//-5 becasue of ``=``
+                    whatvariables2update[i - 3] = new char[strlen(input[i]) - 5];//-5 becasue of ``=``
+                }
+                int counter1 = 0, counter2 = 0;
+                while (!(counter1 == (num - 6) && (counter2 == (num - 6)))) {
+                    if (counter1 == counter2) {
+                        whatsubjects2update[counter1] = strtok(input[3 + counter1], "=`,");
+                        counter1++;
+                    } else {
+                        whatvariables2update[counter2] = strtok(NULL, "=`,");
+                        counter2++;
+                    }
+                }
+
+                bool fourthcheck[num - 6] = {0};
+                for (int i = 0; i < num - 6; i++) {
+                    for (int j = 0; j < counter && !fourthcheck[i]; j++) {
+                        if (strncmp(whatsubjects2update[i], subjects[j], strlen(subjects[j]) + 1) == 0)
+                            fourthcheck[i] = 1;
+                    }
+                }
+                int sumfourthcheck = 0;
+                for (int i = 0; i < num - 6; i++) {
+                    sumfourthcheck += fourthcheck[i];
+                }
+                if (sumfourthcheck == (num - 6)) {
+                    ofstream writeinfile;
+                    writeinfile.open(string(filename) + ".txt");
+                    bool checkforupdate;
+                    for (int i = 0; i < secondcounter; i++) {//actually it's variable counter
+                        checkforupdate = 0;
+                        if ((i / counter) == rownumber) {
+                            cout << i << endl;
+                            for (int j = 0; j < num - 6; j++) {
+                                if (strncmp(whatsubjects2update[j], subjects[i % counter],
+                                            strlen(subjects[i % counter]) + 1) == 0) {
+                                    checkforupdate = 1;
+                                    writeinfile << whatvariables2update[j] << " ";
+                                    break;
+                                }
+                            }
+                        }
+                        if (!checkforupdate)
+                            writeinfile << variables[i] << " ";
+                    }
+                    cout << "successfully UPDATED . ";
+                    writeinfile.close();
+                } else
+                    cout
+                            << "one or more subjects aren't correct,check ur command and it's variables one more time ";
+                delete[]whatsubjects2update;
+                delete[]whatvariables2update;
+            }
+        }
+        delete[]where2update;
+        delete[]firsttoken;
+    } else {
+        cout << "file isn't available,or it's empty...";
+    }
+    delete[]filename;
 
 }
 
